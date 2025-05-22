@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TSP Solver - BFS/DFS</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background-color: #222;
+      color: #ffffff;
+      text-align: center;
+    }
+    h1 {
+      color:rgb(247, 247, 247);
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    p {
+      color:#ff69b4;
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+    canvas {
+      border: 2px solid #ff69b4;
+      margin-top: 20px;
+      background-color:rgb(255, 251, 251);
+    }
+    select, button {
+      padding: 10px 15px;
+      font-size: 1rem;
+      margin: 10px 5px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    select {
+      background-color: #982176;
+      color: white;
+    }
+    button {
+      background-color:#ff69b4;
+      color: white;
+    }
+    button:hover {
+      background-color: #982176;
+    }
+    #output {
+      margin-top: 15px;
+      font-size: 1.2rem;
+      color:rgb(255, 235, 104);
+    }
+  </style>
+</head>
+<body>
+  <h1>Travelling Salesman Problem</h1>
+  <p>Click on the canvas to place cities. Choose an algorithm and solve the TSP!</p>
+
+  <canvas id="canvas" width="600" height="400"></canvas><br>
+
+  <select id="algorithm">
+    <option value="bfs">Breadth-First Search (BFS)</option>
+    <option value="dfs">Depth-First Search (DFS)</option>
+  </select>
+  <button onclick="solveTSP()">Solve TSP</button>
+  <button onclick="resetCanvas()">Reset</button>
+
+  <div id="output"></div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const cities = [];
+
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      cities.push({ x, y });
+      drawCities();
+    });
+
+    function drawCities(path = []) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Draw cities
+      for (let i = 0; i < cities.length; i++) {
+        ctx.beginPath();
+        ctx.arc(cities[i].x, cities[i].y, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = '#3E001F';
+        ctx.fill();
+        ctx.fillText(i, cities[i].x + 8, cities[i].y + 8);
+      }
+
+      // Draw path
+      if (path.length) {
+        ctx.strokeStyle = '#F11A7B';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cities[path[0]].x, cities[path[0]].y);
+        for (let i = 1; i < path.length; i++) {
+          ctx.lineTo(cities[path[i]].x, cities[path[i]].y);
+        }
+        ctx.stroke();
+      }
+    }
+
+    async function solveTSP() {
+      if (cities.length < 2) {
+        alert('Add at least 2 cities.');
+        return;
+      }
+
+      const algorithm = document.getElementById('algorithm').value;
+
+      const res = await fetch('/tsp/solve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cities, algorithm }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        animatePath(data.path);
+        document.getElementById('output').textContent =
+          `Algorithm: ${algorithm.toUpperCase()} | Path: ${data.path.join(' → ')} | Distance: ${data.distance}`;
+      } else {
+        document.getElementById('output').textContent = `Error: ${data.error}`;
+      }
+    }
+
+    function resetCanvas() {
+      cities.length = 0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      document.getElementById('output').textContent = '';
+    }
+
+    // Animate path step-by-step
+    function animatePath(path) {
+      let i = 0;
+      const interval = setInterval(() => {
+        drawCities(path.slice(0, i + 1));
+        if (++i >= path.length) clearInterval(interval);
+      }, 500);
+    }
+  </script>
+</body>
+</html>

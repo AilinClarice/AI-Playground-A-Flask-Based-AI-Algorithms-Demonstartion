@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Water Jug Problem Solver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #222;
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input {
+            padding: 8px;
+            width: 100px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #ff69b4;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            background-color: #f2f2f2;
+            text-align: center;
+            color: black;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .jug-visuals {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .jug {
+            width: 60px;
+            height: 200px;
+            border: 3px solid white;
+            position: relative;
+            display: flex;
+            flex-direction: column-reverse;
+            overflow: hidden;
+        }
+
+        .water {
+            background-color:rgb(0, 215, 253);
+            width: 100%;
+            transition: height 1s ease-in-out;
+        }
+
+        .jug-label {
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        #success-message {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color:rgb(253, 247, 82);
+            color: black;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 5px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Water Jug Problem Solver</h1>
+
+    <div class="container">
+        <div>
+            <label>Jug 1 Capacity:</label>
+            <input type="number" id="jug1_cap" min="1" value="4">
+        </div>
+        <div>
+            <label>Jug 2 Capacity:</label>
+            <input type="number" id="jug2_cap" min="1" value="3">
+        </div>
+        <div>
+            <label>Target Amount:</label>
+            <input type="number" id="target" min="1" value="2">
+        </div>
+        <button id="solve-btn">Solve</button>
+    </div>
+
+    <div class="jug-visuals">
+        <div>
+            <div class="jug" id="jug1">
+                <div class="water" id="jug1-water" style="height: 0%"></div>
+            </div>
+            <div class="jug-label">Jug 1</div>
+        </div>
+        <div>
+            <div class="jug" id="jug2">
+                <div class="water" id="jug2-water" style="height: 0%"></div>
+            </div>
+            <div class="jug-label">Jug 2</div>
+        </div>
+    </div>
+
+    <div id="result">
+        <table id="steps-table">
+            <thead>
+                <tr>
+                    <th>Step</th>
+                    <th>Jug 1</th>
+                    <th>Jug 2</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <p id="error" class="error"></p>
+    </div>
+
+    <div id="success-message">🎉 Hurray! Goal Reached 🎉</div>
+
+    <script>
+        document.getElementById('solve-btn').addEventListener('click', async () => {
+            const jug1_cap = parseInt(document.getElementById('jug1_cap').value);
+            const jug2_cap = parseInt(document.getElementById('jug2_cap').value);
+            const target = parseInt(document.getElementById('target').value);
+
+            document.getElementById('error').textContent = '';
+            document.getElementById('success-message').style.display = 'none';
+            const tbody = document.querySelector('#steps-table tbody');
+            tbody.innerHTML = '';
+
+            try {
+                const response = await fetch('/water-jug/solve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ jug1_cap, jug2_cap, target })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    document.getElementById('error').textContent = data.error;
+                    return;
+                }
+
+                const steps = data.steps;
+
+                steps.forEach((step, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${step.jug1}/${jug1_cap}</td>
+                        <td>${step.jug2}/${jug2_cap}</td>
+                        <td>${getActionDescription(steps, index, jug1_cap, jug2_cap)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                let i = 0;
+                const animateStep = () => {
+                    if (i >= steps.length) {
+                        const last = steps[steps.length - 1];
+                        if (last.jug1 === target || last.jug2 === target) {
+                            document.getElementById('success-message').style.display = 'block';
+                        }
+                        return;
+                    }
+
+                    const step = steps[i];
+                    const jug1_height = (step.jug1 / jug1_cap) * 100;
+                    const jug2_height = (step.jug2 / jug2_cap) * 100;
+
+                    document.getElementById('jug1-water').style.height = `${jug1_height}%`;
+                    document.getElementById('jug2-water').style.height = `${jug2_height}%`;
+
+                    i++;
+                    setTimeout(animateStep, 1000);
+                };
+
+                animateStep();
+
+            } catch (error) {
+                document.getElementById('error').textContent = 'Error: ' + error.message;
+            }
+        });
+
+        function getActionDescription(steps, index, jug1_cap, jug2_cap) {
+            if (index === 0) return "Initial state";
+            const prev = steps[index - 1];
+            const current = steps[index];
+
+            if (current.jug1 === jug1_cap && prev.jug1 !== jug1_cap) return "Fill Jug 1";
+            if (current.jug2 === jug2_cap && prev.jug2 !== jug2_cap) return "Fill Jug 2";
+            if (current.jug1 === 0 && prev.jug1 !== 0) return "Empty Jug 1";
+            if (current.jug2 === 0 && prev.jug2 !== 0) return "Empty Jug 2";
+            if (current.jug1 < prev.jug1 && current.jug2 > prev.jug2) return "Pour Jug 1 → Jug 2";
+            if (current.jug2 < prev.jug2 && current.jug1 > prev.jug1) return "Pour Jug 2 → Jug 1";
+
+            return "Unknown action";
+        }
+    </script>
+</body>
+</html>

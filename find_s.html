@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Find-S Algorithm</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #222;
+            color: white;
+            padding: 20px;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color:rgb(244, 244, 244);
+        }
+
+        .example {
+            background: #333;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .example input[type="text"], select, input[type="number"] {
+            padding: 8px;
+            margin: 5px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #ff69b4;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        #output {
+            background: #f4f4f4;
+            color: black;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .control-panel {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Find-S Algorithm Trainer</h1>
+
+    <div class="control-panel">
+        <label for="numAttrs">Number of Attributes:</label>
+        <input type="number" id="numAttrs" value="3" min="1" onchange="resetExamples()">
+        <button onclick="addExample()">Add Training Example</button>
+        <button onclick="submitData()">Train Find-S</button>
+        <button onclick="resetAll()">Reset</button>
+    </div>
+
+    <div id="examples"></div>
+    <div id="output"></div>
+
+    <script>
+        let exampleCount = 0;
+
+        function resetExamples() {
+            document.getElementById('examples').innerHTML = '';
+            exampleCount = 0;
+            addExample(); // Start fresh with one example
+        }
+
+        function resetAll() {
+            document.getElementById('numAttrs').value = 3;
+            document.getElementById('output').innerHTML = '';
+            resetExamples();
+        }
+
+        function addExample() {
+            const container = document.getElementById('examples');
+            const numAttrs = parseInt(document.getElementById('numAttrs').value);
+            const div = document.createElement('div');
+            div.className = 'example';
+
+            let html = `<label>Example ${exampleCount + 1}</label><br>`;
+            for (let i = 0; i < numAttrs; i++) {
+                html += `<input type="text" placeholder="Attribute ${i + 1}">`;
+            }
+            html += `<select>
+                        <option value="true">Positive</option>
+                        <option value="false">Negative</option>
+                     </select>`;
+            div.innerHTML = html;
+            container.appendChild(div);
+            exampleCount++;
+        }
+
+        function submitData() {
+            const exampleDivs = document.querySelectorAll('.example');
+            const examples = [];
+
+            exampleDivs.forEach(div => {
+                const inputs = div.querySelectorAll('input');
+                const select = div.querySelector('select');
+                const attrs = Array.from(inputs).map(input => input.value.trim());
+                const label = select.value === "true";
+                examples.push({ attributes: attrs, label: label });
+            });
+
+            fetch('/find-s/solve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ examples: examples })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('output').innerHTML = `<strong>Final Hypothesis:</strong> ${data.hypothesis.join(', ')}`;
+            })
+            .catch(err => {
+                document.getElementById('output').innerHTML = `<span style="color: red;">Error: ${err}</span>`;
+            });
+        }
+
+        window.onload = () => {
+            resetExamples(); // Initialize
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Problem Solvers</title>
+  <style>
+    :root {
+      --pink: #FFEDFA;
+      --purple: #E195AB;
+      --dark-pink: #DE3163;
+      --green:rgb(241, 255, 200);
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: url('/static/pink.jpg') no-repeat center center fixed;
+        background-size: cover;
+        color: var(--dark-pink);
+        margin: 0;
+        padding: 20px;
+        text-align: center;
+        position: relative;
+      }
+      
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background-color: rgba(255, 242, 250, 0.45); /* semi-transparent overlay */
+        z-index: -1;
+      }
+      
+
+    h1 {
+      font-size: 2.5rem;
+      color: var(--dark-pink);
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1.1rem;
+      margin-bottom: 30px;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 25px;
+      padding: 0 10px;
+    }
+
+    .app-card {
+      background-color: var(--green);
+      border-radius: 15px;
+      padding: 25px 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      text-decoration: none;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      color: var(--dark-pink);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .app-card h2 {
+      color: var(--dark-pink);
+      margin-bottom: 10px;
+      font-size: 1.5rem;
+    }
+
+    .app-card p {
+      color: #3E001F;
+      font-size: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      .app-card h2 {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Playground!</h1>
+  <p>Select an application to try:</p>
+
+  <div class="app-grid">
+    <!-- 8-Puzzle Card -->
+    <a href="/eight-puzzle" class="app-card">
+      <h2>8-Puzzle Solver</h2>
+      <p>Solve sliding tile puzzles with AI algorithms</p>
+    </a>
+
+    <!-- Tic-Tac-Toe Card -->
+    <a href="/tic-tac-toe" class="app-card">
+      <h2>Tic-Tac-Toe</h2>
+      <p>Play against an AI opponent or human vs human</p>
+    </a>
+
+    <!-- Water Jug (Hill Climbing) Card -->
+  <a href="/water-jug/hill-climbing" class="app-card">
+    <h2>Water Jug (Hill Climbing)</h2>
+    <p>Explore local search strategy with dynamic visuals</p>
+  </a>
+
+    <!-- Water Jug Card -->
+    <a href="/water-jug" class="app-card">
+      <h2>Water Jug Problem</h2>
+      <p>Find optimal steps to measure water</p>
+    </a>
+
+    <!-- TSP Card -->
+    <a href="/tsp" class="app-card">
+      <h2>Traveling Salesman</h2>
+      <p>Visualize pathfinding algorithms</p>
+    </a>
+
+   <!-- Find-S Algorithm Card -->
+<a href="/find-s" class="app-card">
+  <h2>Find-S Algorithm</h2>
+  <p>Train the most specific hypothesis based on positive examples</p>
+</a>
+
+
+  </div>
+</body>
+</html>

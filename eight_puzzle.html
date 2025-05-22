@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>8 Puzzle Solver (A*)</title>
+    <style>
+        body {
+            background-color: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 20px;
+            font-size: 32px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 50px;
+            margin-top: 30px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            grid-gap: 5px;
+        }
+
+        .tile {
+            width: 80px;
+            height: 80px;
+            font-size: 24px;
+            background-color: white;
+            color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid lightpink;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .tile.empty {
+            background-color: #ccc;
+            cursor: default;
+        }
+
+        button {
+            margin: 10px 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #ff69b4;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        button:hover {
+            background: #ff1493;
+        }
+
+        .label {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>8 Puzzle Solver (A* Algorithm)</h1>
+
+    <div class="container">
+        <div>
+            <div class="label">Start State</div>
+            <div class="grid" id="puzzleGrid"></div>
+        </div>
+        <div>
+            <div class="label">Goal State</div>
+            <div class="grid" id="goalGrid"></div>
+        </div>
+    </div>
+
+    <button onclick="shuffle()">Shuffle</button>
+    <button onclick="solve()">Solve</button>
+    <div id="message" style="margin-top: 20px; font-size: 24px; color: #ff69b4;"></div>
+
+
+    <script>
+        let currentState = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+        const goalState = {{ goal_state|tojson }};
+
+        function render(gridId, state, interactive = false) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+
+            state.forEach((val, idx) => {
+                const tile = document.createElement('div');
+                tile.className = 'tile' + (val === 0 ? ' empty' : '');
+                tile.textContent = val !== 0 ? val : '';
+                
+                if (interactive && val !== 0) {
+                    tile.addEventListener('click', () => handleTileClick(idx));
+                }
+
+                grid.appendChild(tile);
+            });
+        }
+
+        function shuffle() {
+            fetch('/eight-puzzle/shuffle')
+                .then(res => res.json())
+                .then(data => {
+                    currentState = data.state;
+                    render('puzzleGrid', currentState, true);
+                });
+        }
+
+        function solve() {
+            fetch('/eight-puzzle/solve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ start: currentState })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.solution) {
+                    animateSolution(data.solution);
+                } else {
+                    alert('No solution found.');
+                }
+            });
+        }
+
+        function handleTileClick(index) {
+            const emptyIndex = currentState.indexOf(0);
+            const validMoves = getValidMoves(emptyIndex);
+        
+            if (validMoves.includes(index)) {
+                [currentState[index], currentState[emptyIndex]] = [currentState[emptyIndex], currentState[index]];
+                render('puzzleGrid', currentState, true);
+                checkGoalReached();
+            }
+        }
+        
+
+        function getValidMoves(emptyIndex) {
+            const moves = [];
+            const row = Math.floor(emptyIndex / 3);
+            const col = emptyIndex % 3;
+
+            const directions = [
+                [row - 1, col], // up
+                [row + 1, col], // down
+                [row, col - 1], // left
+                [row, col + 1]  // right
+            ];
+
+            for (const [r, c] of directions) {
+                if (r >= 0 && r < 3 && c >= 0 && c < 3) {
+                    moves.push(r * 3 + c);
+                }
+            }
+
+            return moves;
+        }
+
+        function animateSolution(states) {
+            let i = 0;
+            const interval = setInterval(() => {
+                currentState = states[i];
+                render('puzzleGrid', currentState, false);
+                i++;
+                if (i >= states.length) {
+                    clearInterval(interval);
+                    render('puzzleGrid', currentState, true);
+                    checkGoalReached();
+                }
+            }, 500);
+        }
+        
+        function checkGoalReached() {
+            const reached = currentState.every((val, idx) => val === goalState[idx]);
+            const msg = document.getElementById("message");
+            msg.innerHTML = reached ? "🎉 Hurray! Goal Reached!" : "";
+        }
+
+        render('puzzleGrid', currentState, true);
+        render('goalGrid', goalState);
+    </script>
+</body>
+</html>

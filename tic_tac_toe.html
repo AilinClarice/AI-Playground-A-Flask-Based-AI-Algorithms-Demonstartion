@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tic Tac Toe</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style1.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Tic Tac Toe</h1>
+
+        <div>
+            <label for="mode-select">Choose Game Mode:</label>
+            <select id="mode-select" onchange="setMode(this.value)">
+                <option value="ai">Player vs AI</option>
+                <option value="human">Player vs Player</option>
+            </select>
+        </div>
+
+        <div id="scoreboard">
+            <p>Player X: <span id="score-x">0</span> | Player O: <span id="score-o">0</span></p>
+        </div>
+
+        <div id="game-board"></div>
+        <div id="status"></div>
+        <button onclick="resetGame(true)">Reset Game</button>
+    </div>
+
+    <script>
+        let board = Array(9).fill('');
+        let currentPlayer = 'x';
+        let mode = 'ai';
+        let scores = { x: 0, o: 0 };
+        let roundsPlayed = 0;
+
+        function setMode(selectedMode) {
+            mode = selectedMode;
+            fetch('/tic-tac-toe/set-mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode })
+            }).then(() => {
+                resetGame(true);
+            });
+        }
+
+        function renderBoard() {
+            const boardDiv = document.getElementById('game-board');
+            boardDiv.innerHTML = '';
+            board.forEach((val, i) => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.textContent = val;
+                cell.onclick = () => makeMove(i);
+                boardDiv.appendChild(cell);
+            });
+        }
+
+        async function makeMove(index) {
+            if (board[index] !== '' || (mode === 'human' && currentPlayer !== 'x' && currentPlayer !== 'o')) return;
+
+            const response = await fetch('/tic-tac-toe/move', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ board, player: currentPlayer, index })
+            });
+
+            const result = await response.json();
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+
+            board = result.board;
+            renderBoard();
+
+            if (result.winner) {
+                roundsPlayed++;
+                document.getElementById('status').textContent = result.winner === 'Draw' ? 'It\'s a Draw!' : `${result.winner.toUpperCase()} Wins this round!`;
+
+                if (result.winner !== 'Draw') {
+                    scores = result.scores;
+                    document.getElementById('score-x').textContent = scores.x;
+                    document.getElementById('score-o').textContent = scores.o;
+                }
+
+                if (scores.x === 2 || scores.o === 2 || roundsPlayed >= 3) {
+                    const finalWinner = scores.x > scores.o ? 'X' : scores.o > scores.x ? 'O' : 'No one';
+                    document.getElementById('status').textContent = `${finalWinner} wins the best of 3!`;
+                    setTimeout(() => resetGame(true), 3000);
+                } else {
+                    setTimeout(() => resetGame(false), 1500);
+                }
+            } else {
+                currentPlayer = (mode === 'human') ? (currentPlayer === 'x' ? 'o' : 'x') : 'x';
+            }
+        }
+
+        function resetGame(fullReset = false) {
+            board = Array(9).fill('');
+            document.getElementById('status').textContent = '';
+            currentPlayer = 'x';
+            if (fullReset) {
+                scores = { x: 0, o: 0 };
+                roundsPlayed = 0;
+                document.getElementById('score-x').textContent = '0';
+                document.getElementById('score-o').textContent = '0';
+            }
+            renderBoard();
+        }
+
+        renderBoard();
+    </script>
+</body>
+</html>
