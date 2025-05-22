@@ -1,4 +1,4 @@
-# AI-Playground-A-Flask-Based-AI-Algorithms-Demonstartion
+# 🕹️AI-Playground-A-Flask-Based-AI-Algorithms-Demonstartion
 <img width="1438" alt="image" src="https://github.com/user-attachments/assets/653051e3-de4e-478e-9aca-40d945a18c9e" />
 
 Hi, welcome to the AI Playground!
